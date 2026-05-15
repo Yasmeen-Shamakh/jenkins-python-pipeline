@@ -4,7 +4,6 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                // هتقوم بسحب الكود تلقائيًا من ريبو GitHub اللي مربوط بالـ Job
                 checkout scm
                 echo 'Source code checked out successfully.'
             }
@@ -13,27 +12,25 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Building the Python environment...'
-                // تجهيز البيئة وتسطيب المكتبات
-                sh 'python3 -m venv venv'
-                sh './venv/bin/pip install -r requirements.txt'
+                // هنستخدم python أو python3 المتاح، وبنحط --break-system-packages عشان لو الـเวอร์ชั่น جديدة في دبيان/أوبونتو متعملش بلوك
+                sh 'pip install --no-cache-dir -r requirements.txt --break-system-packages || pip install --no-cache-dir -r requirements.txt'
             }
         }
 
         stage('Test') {
             steps {
                 echo 'Running Unit Tests...'
-                // تشغيل ملف التست اللي عملناه
-                sh './venv/bin/pytest test_app.py'
+                // تشغيل التست علطول بـ python -m pytest أو pytest
+                sh 'python3 -m pytest test_app.py || python -m pytest test_app.py || pytest test_app.py'
             }
         }
 
         stage('Deploy') {
             steps {
                 echo 'Deploying Application...'
-                // تشغيل التطبيق في الخلفية (Background) عشان يفضل قايم ونشوف الـ UI
-                // ملاحظة: تم استخدام PORT 5000
-                sh 'nohup ./venv/bin/python app.py > flask.log 2>&1 &'
-                echo 'Application deployed and running on http://localhost:5000'
+                // تشغيل التطبيق في الخلفية
+                sh 'nohup python3 app.py > flask.log 2>&1 & || nohup python app.py > flask.log 2>&1 &'
+                echo 'Application deployed and running.'
             }
         }
     }
